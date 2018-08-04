@@ -44,10 +44,11 @@ void IRAM_ATTR AiEsp32RotaryEncoder::readEncoder_ISR()
 		//Serial.print("OldAB= ");
 		//Serial.println(old_AB, BIN);
 
-		int8_t ENC_PORT = ((digitalRead(this->encoderBPin)) ? (1 << 1) : 0) | ((digitalRead(this->encoderAPin)) ? (1 << 0) : 0);
+		this->ENC_PORT = ((digitalRead(this->encoderBPin)) ? (1 << 1) : 0) | ((digitalRead(this->encoderAPin)) ? (1 << 0) : 0);
 		
-		//Serial.print("ENC_PORT= ");
-		//Serial.println(ENC_PORT, BIN);
+		Serial.print(xTaskGetTickCount());
+		Serial.print(" ENC_PORT= ");
+		Serial.println(ENC_PORT, BIN);
 		
 		this->old_AB |= ( ENC_PORT & 0x03 );  //add current state
 
@@ -58,6 +59,7 @@ void IRAM_ATTR AiEsp32RotaryEncoder::readEncoder_ISR()
 		//Serial.println(( old_AB & 0x0f ), BIN);
 
 		this->encoder0Pos += ( this->enc_states[( this->old_AB & 0x0f )]);	
+		//Serial.printf("pinA: %d pinB: %d delta=%d\n", this->encoderAPin, this->encoderBPin, ( this->enc_states[( this->old_AB & 0x0f )]));
 
 		if (this->encoder0Pos > this->_maxEncoderValue)
 			this->encoder0Pos = this->_circleValues ? this->_minEncoderValue : this->_maxEncoderValue;
@@ -72,16 +74,16 @@ void IRAM_ATTR AiEsp32RotaryEncoder::readEncoder_ISR()
 }
 
 
-AiEsp32RotaryEncoder::AiEsp32RotaryEncoder(uint8_t encoder_APin, uint8_t encoder_BPin, uint8_t encoder_ButtonPin, uint8_t encoder_VccPin)
+AiEsp32RotaryEncoder::AiEsp32RotaryEncoder(uint8_t _encoder_APin, uint8_t _encoder_BPin, uint8_t _encoder_ButtonPin, uint8_t _encoder_VccPin)
 {
 	this->old_AB = 0;
 	
-	this->encoderAPin = encoder_APin;
-	this->encoderBPin = encoder_BPin;
-	this->encoderButtonPin = encoder_ButtonPin;
-	this->encoderVccPin = encoder_VccPin;
-	pinMode(this->encoderAPin, INPUT);
-	pinMode(this->encoderBPin, INPUT);
+	this->encoderAPin = _encoder_APin;
+	this->encoderBPin = _encoder_BPin;
+	this->encoderButtonPin = _encoder_ButtonPin;
+	this->encoderVccPin = _encoder_VccPin;
+	//pinMode(this->encoderAPin, INPUT_PULLUP);
+	//pinMode(this->encoderBPin, INPUT_PULLUP);
 }
 
 void AiEsp32RotaryEncoder::setBoundaries(int16_t minEncoderValue, int16_t maxEncoderValue, bool circleValues)
