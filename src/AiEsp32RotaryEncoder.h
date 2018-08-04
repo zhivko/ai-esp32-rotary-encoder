@@ -42,7 +42,8 @@ private:
 	int16_t _maxEncoderValue = 1 << 15;
 
 	int8_t enc_states[];
-	uint8_t old_AB;
+	uint8_t phase;
+	uint8_t phasep;
 	int16_t lastReadEncoder0Pos;
 	bool previous_butt_state;
 

@@ -5,78 +5,58 @@
 #include "AiEsp32RotaryEncoder.h"
 
 void IRAM_ATTR AiEsp32RotaryEncoder::readEncoder_ISR()
-{	
-	//Serial.println("interrupt!");
+{
 	portENTER_CRITICAL_ISR(&(this->mux));
-	if (this->isEnabled) {
+	boolean A = digitalRead(this->encoderAPin);
+	boolean B = digitalRead(this->encoderBPin);
 
-	/*
-		digitalWrite(2, HIGH);
-		digitalWrite(2, HIGH);
-		digitalWrite(2, HIGH);
-		digitalWrite(2, LOW);
-	*/
-	
-	/*
-		static uint8_t old_AB = 0;
-		// grey code
-		// http://hades.mech.northwestern.edu/index.php/Rotary_Encoder
-		// also read up on 'Understanding Quadrature Encoded Signals'
-		// https://www.pjrc.com/teensy/td_libs_Encoder.html
-		// another interesting lib: https://github.com/0xPIT/encoder/blob/arduino/ClickEncoder.cpp
-		// explanation of this code is at: https://www.circuitsathome.com/mcu/reading-rotary-encoder-on-arduino/
-		static int8_t enc_states[] = { 0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0 };
+	if((A==HIGH)&&(B==HIGH)) this->phase =1;
+	if((A==HIGH)&&(B==LOW))    this->phase =2;
+	if((A==LOW)&&(B==LOW)) this->phase =3;
+	if((A==LOW)&&(B==HIGH))    this->phase =4;
 
-		old_AB <<= 2;
-		old_AB |= ((digitalRead(encoderBPin)) ? (1 << 1) : 0) | ((digitalRead(encoderAPin)) ? (1 << 0) : 0);
+	switch(this->phase){
 
-		encoder0Pos += (enc_states[(old_AB & 0x0f)]);
-		
-		Serial.println(encoder0Pos);
+		case 1:
+		{
+			if(this->phasep == 2)    this->encoder0Pos--;
+			if(this->phasep == 4)    this->encoder0Pos++;
+			break;
+		}
 
-		if (encoder0Pos > _maxEncoderValue) encoder0Pos = _circleValues ? _minEncoderValue : _maxEncoderValue;
-		if (encoder0Pos < _minEncoderValue) encoder0Pos = _circleValues ? _maxEncoderValue : _minEncoderValue;
-	*/
-		// code from https://www.circuitsathome.com/mcu/reading-rotary-encoder-on-arduino/
-		/**/
-		this->old_AB <<= 2;                   //remember previous state
+		case 2:
+		{
+			if(this->phasep == 1)    this->encoder0Pos++;
+			if(this->phasep == 3)    this->encoder0Pos--;
+			break;
+		}
 
-		//Serial.print("OldAB= ");
-		//Serial.println(old_AB, BIN);
+		case 3:
+		{
+			if(this->phasep == 2)    this->encoder0Pos++;
+			if(this->phasep == 4)    this->encoder0Pos--;
+			break;
+		}
 
-		this->ENC_PORT = ((digitalRead(this->encoderBPin)) ? (1 << 1) : 0) | ((digitalRead(this->encoderAPin)) ? (1 << 0) : 0);
-		
-		Serial.print(xTaskGetTickCount());
-		Serial.print(" ENC_PORT= ");
-		Serial.println(ENC_PORT, BIN);
-		
-		this->old_AB |= ( ENC_PORT & 0x03 );  //add current state
-
-		//Serial.print("NewAB= ");
-		//Serial.println(old_AB, BIN);		
-
-		//Serial.print("old_AB & 0x0f= ");
-		//Serial.println(( old_AB & 0x0f ), BIN);
-
-		this->encoder0Pos += ( this->enc_states[( this->old_AB & 0x0f )]);	
-		//Serial.printf("pinA: %d pinB: %d delta=%d\n", this->encoderAPin, this->encoderBPin, ( this->enc_states[( this->old_AB & 0x0f )]));
-
-		if (this->encoder0Pos > this->_maxEncoderValue)
-			this->encoder0Pos = this->_circleValues ? this->_minEncoderValue : this->_maxEncoderValue;
-		if (this->encoder0Pos < this->_minEncoderValue)
-			this->encoder0Pos = this->_circleValues ? this->_maxEncoderValue : this->_minEncoderValue;		
-
-		//Serial.print("encoder0Pos= ");
-		//Serial.println(this->encoder0Pos);	
-		//Serial.println("---------------");
+		default:
+		{
+			if(this->phasep == 1)    this->encoder0Pos--;
+			if(this->phasep == 3)    this->encoder0Pos++;
+			break;
+		}
 	}
+
+
+	this->phasep=this->phase;
+	//interruptCounter++;
 	portEXIT_CRITICAL_ISR(&mux);
 }
 
 
 AiEsp32RotaryEncoder::AiEsp32RotaryEncoder(uint8_t _encoder_APin, uint8_t _encoder_BPin, uint8_t _encoder_ButtonPin, uint8_t _encoder_VccPin)
 {
-	this->old_AB = 0;
+	this->phase = 0;
+	this->phasep = 0;
 	
 	this->encoderAPin = _encoder_APin;
 	this->encoderBPin = _encoder_BPin;
