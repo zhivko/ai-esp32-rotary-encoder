@@ -4,54 +4,6 @@
 
 #include "AiEsp32RotaryEncoder.h"
 
-void IRAM_ATTR AiEsp32RotaryEncoder::readEncoder_ISR()
-{
-	portENTER_CRITICAL_ISR(&(this->mux));
-	boolean A = digitalRead(this->encoderAPin);
-	boolean B = digitalRead(this->encoderBPin);
-
-	if((A==HIGH)&&(B==HIGH)) this->phase =1;
-	if((A==HIGH)&&(B==LOW))    this->phase =2;
-	if((A==LOW)&&(B==LOW)) this->phase =3;
-	if((A==LOW)&&(B==HIGH))    this->phase =4;
-
-	switch(this->phase){
-
-		case 1:
-		{
-			if(this->phasep == 2)    this->encoder0Pos--;
-			if(this->phasep == 4)    this->encoder0Pos++;
-			break;
-		}
-
-		case 2:
-		{
-			if(this->phasep == 1)    this->encoder0Pos++;
-			if(this->phasep == 3)    this->encoder0Pos--;
-			break;
-		}
-
-		case 3:
-		{
-			if(this->phasep == 2)    this->encoder0Pos++;
-			if(this->phasep == 4)    this->encoder0Pos--;
-			break;
-		}
-
-		default:
-		{
-			if(this->phasep == 1)    this->encoder0Pos--;
-			if(this->phasep == 3)    this->encoder0Pos++;
-			break;
-		}
-	}
-
-
-	this->phasep=this->phase;
-	//interruptCounter++;
-	portEXIT_CRITICAL_ISR(&mux);
-}
-
 
 AiEsp32RotaryEncoder::AiEsp32RotaryEncoder(uint8_t _encoder_APin, uint8_t _encoder_BPin, uint8_t _encoder_ButtonPin, uint8_t _encoder_VccPin)
 {
@@ -138,6 +90,7 @@ ButtonState AiEsp32RotaryEncoder::currentButtonState()
 void AiEsp32RotaryEncoder::reset(int16_t newValue_) {
 	newValue_ = newValue_ * 2;
 	this->encoder0Pos = newValue_;
+
 	if (this->encoder0Pos > this->_maxEncoderValue) this->encoder0Pos = this->_circleValues ? this->_minEncoderValue : this->_maxEncoderValue;
 	if (this->encoder0Pos < this->_minEncoderValue) this->encoder0Pos = this->_circleValues ? this->_maxEncoderValue : this->_minEncoderValue;	
 }

@@ -27,30 +27,27 @@ typedef enum {
 class AiEsp32RotaryEncoder {
 	
 private:
-	portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-	int16_t encoder0Pos = 0;
 	int8_t ENC_PORT;
 	bool _circleValues = false;
 	bool isEnabled = true;
+
+	int16_t _minEncoderValue = -1 << 15;
+	int16_t _maxEncoderValue = 1 << 15;
+
+	int16_t lastReadEncoder0Pos;
+	bool previous_butt_state;
+
+public:
+
+	volatile int16_t encoder0Pos = 0;
 
 	uint8_t encoderAPin      = AIESP32ROTARYENCODER_DEFAULT_A_PIN;
 	uint8_t encoderBPin      = AIESP32ROTARYENCODER_DEFAULT_B_PIN;
 	uint8_t encoderButtonPin = AIESP32ROTARYENCODER_DEFAULT_BUT_PIN;
 	uint8_t encoderVccPin    = AIESP32ROTARYENCODER_DEFAULT_VCC_PIN;
-
-	int16_t _minEncoderValue = -1 << 15;
-	int16_t _maxEncoderValue = 1 << 15;
-
-	int8_t enc_states[];
 	uint8_t phase;
 	uint8_t phasep;
-	int16_t lastReadEncoder0Pos;
-	bool previous_butt_state;
 
-	int8_t enc_state[16] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
-	void(*ISR_callback)();
-
-public: 
 	AiEsp32RotaryEncoder(
 		uint8_t _encoderAPin,
 		uint8_t _encoderBPin,
@@ -58,6 +55,7 @@ public:
 		uint8_t _encoderVccPin
 	);
 	void setBoundaries(int16_t minValue = -100, int16_t maxValue = 100, bool circleValues = false);
+	portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 	void IRAM_ATTR readEncoder_ISR();
 	
 	void setup(void (*ISR_callback)(void));
