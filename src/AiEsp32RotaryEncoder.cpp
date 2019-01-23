@@ -18,7 +18,7 @@ AiEsp32RotaryEncoder::AiEsp32RotaryEncoder(uint8_t _encoder_APin, uint8_t _encod
 	//pinMode(this->encoderBPin, INPUT_PULLUP);
 }
 
-void AiEsp32RotaryEncoder::setBoundaries(int16_t minEncoderValue, int16_t maxEncoderValue, bool circleValues)
+void AiEsp32RotaryEncoder::setBoundaries(int32_t minEncoderValue, int32_t maxEncoderValue, bool circleValues)
 {
 	this->_minEncoderValue = minEncoderValue * 2;
 	this->_maxEncoderValue = maxEncoderValue * 2;
@@ -52,13 +52,13 @@ void AiEsp32RotaryEncoder::begin()
 {
 	this->lastReadEncoder0Pos = 0;
 	//Serial.begin(115200);
-	if (this->encoderVccPin >= 0) {
+	if (this->encoderVccPin > 0) {
 		pinMode(this->encoderVccPin, OUTPUT);	digitalWrite(this->encoderVccPin, 1);//Vcc for encoder 
 	}
 	//Serial.println("Enable rotary encoder ISR:");
 	// Initialize rotary encoder reading and decoding
 	this->previous_butt_state = 0;
-	if (this->encoderButtonPin >= 0) {
+	if (this->encoderButtonPin > 0) {
 		pinMode(this->encoderButtonPin, INPUT_PULLUP);
 	}
 }
@@ -87,12 +87,14 @@ ButtonState AiEsp32RotaryEncoder::currentButtonState()
 	return (butt_state ? BUT_DOWN : BUT_UP);
 }
 
-void AiEsp32RotaryEncoder::reset(int16_t newValue_) {
+void AiEsp32RotaryEncoder::reset(int32_t newValue_) {
 	newValue_ = newValue_ * 2;
 	this->encoder0Pos = newValue_;
 
 	if (this->encoder0Pos > this->_maxEncoderValue) this->encoder0Pos = this->_circleValues ? this->_minEncoderValue : this->_maxEncoderValue;
-	if (this->encoder0Pos < this->_minEncoderValue) this->encoder0Pos = this->_circleValues ? this->_maxEncoderValue : this->_minEncoderValue;	
+	if (this->encoder0Pos < this->_minEncoderValue) this->encoder0Pos = this->_circleValues ? this->_maxEncoderValue : this->_minEncoderValue;
+
+	Serial.printf("\nReseted encoder to value: %d\n", this->encoder0Pos);
 }
 
 void AiEsp32RotaryEncoder::enable() {
